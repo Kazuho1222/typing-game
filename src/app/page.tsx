@@ -16,10 +16,10 @@ export default function Home() {
   const [isStarted, setIsStarted] = useState(false)
   const [userName, setUserName] = useState("")
   const [startTime, setStartTime] = useState(0)
-  const [totalTime, setTortalTime] = useState(0)
+  const [totalTime, setTotalTime] = useState(0)
   const [score, setScore] = useState(0)
 
-  const addResult = (userName: string, startTime: number) => {
+  const addResult = async (userName: string, startTime: number) => {
     const endTime = Date.now()
     const totalTime = endTime - startTime
     const timeInSeconds = totalTime / 1000
@@ -27,9 +27,19 @@ export default function Home() {
     const timeDeduction = Math.floor(timeInSeconds * 100)
     const score = Math.max(1000, baseScore - timeDeduction)
 
+    await fetch("/api/result", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        score: score,
+        userName: userName,
+      }),
+    })
+
     return { totalTime, score }
   }
-
 
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
@@ -43,8 +53,8 @@ export default function Home() {
 
       if (currentPosition === currentQuestion.question.length - 1) {
         if (currentQuestionIndex === questions.length - 1) {
-          const { totalTime, score } = addResult(userName, startTime)
-          setTortalTime(totalTime)
+          const { totalTime, score } = await addResult(userName, startTime)
+          setTotalTime(totalTime)
           setScore(score)
 
           setIsCompleted(true)
