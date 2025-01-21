@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Score = {
   userName: string
@@ -24,6 +24,24 @@ export default function Home() {
   const [totalTime, setTotalTime] = useState(0)
   const [score, setScore] = useState(0)
   const [scores, setScores] = useState<Score[]>([])
+
+  const bgmRef = useRef<HTMLAudioElement | null>(null)
+  const shotSoundRef = useRef<HTMLAudioElement | null>(null)
+
+  useEffect(() => {
+    bgmRef.current = new Audio("/bgm.mp3")
+    bgmRef.current.loop = true
+    shotSoundRef.current = new Audio("/shot.mp3")
+  }, [])
+
+  useEffect(() => {
+    if (isStarted && bgmRef.current) {
+      bgmRef.current.play()
+    }
+    if (isCompleted && bgmRef.current) {
+      bgmRef.current.pause()
+    }
+  }, [isStarted, isCompleted])
 
   const addResult = async (userName: string, startTime: number) => {
     const endTime = Date.now()
@@ -65,6 +83,10 @@ export default function Home() {
 
       if (currentPosition === currentQuestion.question.length - 1) {
         if (currentQuestionIndex === questions.length - 1) {
+          if (shotSoundRef.current) {
+            shotSoundRef.current.currentTime = 0
+            shotSoundRef.current.play()
+          }
           const { totalTime, score } = await addResult(userName, startTime)
 
           setTotalTime(totalTime)
@@ -75,6 +97,10 @@ export default function Home() {
           const scores = await fetchScores()
           setScores(scores)
         } else {
+          if (shotSoundRef.current) {
+            shotSoundRef.current.currentTime = 0
+            shotSoundRef.current.play()
+          }
           setCurrentQuestionIndex((prev) => prev + 1)
           setCurrentPosition(0)
         }
