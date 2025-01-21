@@ -1,6 +1,11 @@
 "use client"
 import { useEffect, useState } from "react";
 
+type Score = {
+  userName: string
+  score: number
+}
+
 export default function Home() {
   const questions = [
     { question: "React", image: "/monster1.jpg" },
@@ -18,6 +23,7 @@ export default function Home() {
   const [startTime, setStartTime] = useState(0)
   const [totalTime, setTotalTime] = useState(0)
   const [score, setScore] = useState(0)
+  const [scores, setScores] = useState<Score[]>([])
 
   const addResult = async (userName: string, startTime: number) => {
     const endTime = Date.now()
@@ -41,6 +47,12 @@ export default function Home() {
     return { totalTime, score }
   }
 
+  const fetchScores = async () => {
+    const res = await fetch("/api/result")
+    const data = await res.json()
+    return data.results
+  }
+
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
       const currentQuestion = questions[currentQuestionIndex]
@@ -54,10 +66,14 @@ export default function Home() {
       if (currentPosition === currentQuestion.question.length - 1) {
         if (currentQuestionIndex === questions.length - 1) {
           const { totalTime, score } = await addResult(userName, startTime)
+
           setTotalTime(totalTime)
           setScore(score)
-
           setIsCompleted(true)
+
+
+          const scores = await fetchScores()
+          setScores(scores)
         } else {
           setCurrentQuestionIndex((prev) => prev + 1)
           setCurrentPosition(0)
@@ -117,6 +133,28 @@ export default function Home() {
               seconds
             </p>
             <p>Score: {score}</p>
+          </div>
+          <div className="mt-8">
+            <h3>Ranking</h3>
+            {scores.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8">
+                <p>Loading scores...</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {scores.map((score, index) => (
+                  <div
+                    key={index}
+                    className="flex justify-between items-center p-3"
+                  >
+                    <span>
+                      {index + 1}.{score.userName}
+                    </span>
+                    <span className="text-red-500">{score.score}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </main>
